@@ -264,4 +264,69 @@ dt { color: var(--muted); } dd { margin: 0; font-weight: 600; text-align: right;
   .consult-layout { min-height: calc(100vh - 190px); }.chat-panel { min-height: calc(100vh - 190px); }.chat-messages { padding: 18px 14px; }.message { max-width: 94%; }
   .answer-structured { min-width: 0; }
   .form-grid { grid-template-columns: 1fr; }.form-grid .full { grid-column: 1; }.modal { padding: 28px 20px; }
+  .patient-grid { grid-template-columns: 1fr; }
 }
+
+/* ===========================================================================
+   患者洞察 Agent · 洞察页样式（对应 docs/04 阶段 B）
+   =========================================================================== */
+.doctor-shell { max-width: 1320px; margin: 0 auto; padding: 28px 24px 60px; }
+.insight-layout { display: grid; gap: 18px; }
+
+.back-btn { display: inline-flex; align-items: center; gap: 6px; align-self: start; padding: 8px 14px !important; min-height: 38px !important; font-size: 12px; }
+.back-btn .flip { transform: rotate(180deg); }
+
+.patient-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.patient-card { display: grid; gap: 12px; text-align: left; background: white; border: 1px solid var(--border); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); cursor: pointer; transition: .2s ease; }
+.patient-card:hover { border-color: var(--green); transform: translateY(-2px); }
+.patient-head { display: flex; align-items: center; gap: 13px; }
+.patient-head .chevron-right, .patient-head svg:last-child { margin-left: auto; color: var(--muted); }
+.patient-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--green-soft); color: var(--green); display: grid; place-items: center; font-size: 17px; font-weight: 700; }
+.patient-info { display: grid; gap: 2px; }
+.patient-info strong { font-size: 15px; color: #25332f; }
+.patient-info span { font-size: 11px; color: var(--muted); }
+.patient-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; border-radius: 20px; padding: 3px 9px; font-size: 10px; font-weight: 700; background: var(--green-soft); color: var(--green); }
+.chip.muted { background: #eef1ef; color: var(--muted); font-weight: 600; }
+.patient-meta { margin: 0; font-size: 10px; color: var(--muted); }
+
+.insight-head { position: relative; }
+.insight-head .risk-tag { margin-left: auto; }
+
+.risk-tag { display: inline-flex; align-items: center; border-radius: 20px; padding: 4px 10px; font-size: 10px; font-weight: 800; letter-spacing: .04em; background: var(--green-soft); color: var(--green); }
+.risk-tag.l1 { background: var(--green-soft); color: var(--green); }
+.risk-tag.l2 { background: #fff3e0; color: #b87a2e; }
+.risk-tag.l3 { background: #fdeceb; color: var(--red); }
+.risk-tag.l4 { background: var(--red); color: white; }
+
+.insight-adherence { display: grid; gap: 12px; background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+.adherence-bar { height: 12px; background: #edf0ed; border-radius: 20px; overflow: hidden; }
+.adherence-fill { height: 100%; border-radius: 20px; background: var(--green); transition: width .4s ease; }
+.adherence-fill[data-rate='warn'] { background: var(--orange); }
+.adherence-stats { display: flex; flex-wrap: wrap; gap: 18px; font-size: 12px; color: var(--muted); }
+.adherence-stats strong { color: #25332f; font-size: 15px; }
+.warn-text { color: var(--orange) !important; }
+.warn-text strong { color: var(--orange) !important; }
+
+.safety-box.warn { background: #fdece9; color: #8a3d3a; }
+.safety-box.warn strong { color: #6b2a28; }
+.safety-box.warn p { color: #8a3d3a; }
+
+.cabinet-list { display: grid; gap: 12px; }
+.insight-drug { grid-template-columns: 1fr; }
+.insight-drug .drug-content strong { display: block; font-size: 15px; margin-bottom: 10px; }
+
+.risk-event-list { display: grid; gap: 10px; }
+.risk-event-row { display: flex; gap: 12px; align-items: flex-start; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.risk-event-row .risk-tag { flex: 0 0 auto; }
+.risk-event-row strong { font-size: 12px; color: #40504b; }
+.risk-event-row p { margin: 3px 0 0; font-size: 11px; color: var(--muted); }
+
+.insight-summary { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+
+.tool-snapshot { background: #f7f9f7; border: 1px dashed var(--border); border-radius: 12px; padding: 14px 16px; display: grid; gap: 3px; }
+.tool-snapshot strong { font-size: 11px; color: var(--green); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+.tool-snapshot p { margin: 0; font-size: 10px; color: var(--muted); line-height: 1.6; }
+
+.empty-journey .muted { color: var(--muted); font-size: 12px; margin: 4px 0 0; }
+
