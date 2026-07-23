@@ -24,7 +24,9 @@
 
 ## 二、功能概览
 
-Demo 提供五个核心页面，覆盖「识药 → 建档 → 计划 → 提醒 → 咨询」的完整闭环：
+Demo 提供两个独立端：患者端（5 个核心页面）与医生端（患者洞察 Agent），覆盖「识药 -> 建档 -> 计划 -> 提醒 -> 咨询」与「患者数据 -> 工具分析 -> 诊前摘要」闭环：
+
+### 患者端（`/`）
 
 | 页面 | 名称 | 功能说明 |
 | :-: | :-: | :-- |
@@ -34,9 +36,17 @@ Demo 提供五个核心页面，覆盖「识药 → 建档 → 计划 → 提醒
 | 🤖 | AI 咨询 | 基于已确认药品的结构化问答，支持语音输入与播报 |
 | 👤 | 我的 | 演示用户信息、设置入口、恢复演示数据 |
 
+### 医生端 · 患者洞察（`/doctor/insight`）
+
+独立路由，不出现在患者端导航。详见 `docs/04-患者洞察Agent方案设计.md`。
+
+- 患者列表：8 名 Mock 患者，覆盖高/中/低依从性、相互作用、临期、风险事件场景
+- 单患者诊前摘要：Agent 调用 5 个只读工具（依从性/用药清单/相互作用/临期库存/风险事件），再由百川 LLM 组装摘要并过安全守门
+- 数据快照：每份摘要带生成时间、数据区间、工具链，可追溯
+
 ### 安全规则体系
 
-服务端在 `/api/consult` 中内置多层风险拦截：
+服务端在 `/api/consult` 与 `/api/insight/*` 中内置同一套多层风险拦截：
 
 - **L4 紧急**：命中「胸痛、呼吸困难、昏迷、抽搐、儿童误服」等关键词时，立即引导拨打急救电话；
 - **L3 拒答**：命中「停药、换药、增量、减量、改剂量」等关键词时，引导联系开方医生或药师；
@@ -72,10 +82,11 @@ demo/
 ├── vite.config.ts       # Vite 配置（含 /api 代理到 8787）
 ├── src/
 │   ├── main.tsx          # React 挂载入口
-│   ├── App.tsx           # 应用主组件（全部页面与交互）
+│   ├── App.tsx           # 应用主组件（患者端 + 医生端 /doctor 路由分流）
 │   └── styles.css        # 全局样式
 ├── server/
-│   └── index.js          # Express API（/api/health、/api/ocr、/api/consult）
+│   ├── index.js          # Express API（/api/health、/api/ocr、/api/consult、/api/insight）
+│   └── mock-data.json    # 患者洞察 Mock 数据（药品/相互作用/患者画像）
 ├── dist/                 # 构建产物（git 忽略）
 └── node_modules/         # 依赖（git 忽略）
 ```
@@ -196,9 +207,25 @@ npm start          # 启动生产 API 服务（需自行托管 dist 静态资源
 - **请求体**：`{ "question": "这个药通常用于什么？", "drug": { "genericName": "...", ... } }`
 - **响应**：结构化回答（summary / keyPoints / risks / nextAction / warning）+ `riskLevel`（L1~L4）
 
+### `GET /api/insight/patients`
+
+医生端患者洞察 · 返回 Mock 患者列表（不含明细）。
+
+- **响应**：`{ "ok": true, "patients": [{ "id", "name", "age", "gender", "conditions", "drugCount", "enrolledAt", "lastActiveAt" }] }`
+
+### `POST /api/insight/summary`
+
+医生端患者洞察 · 生成某患者诊前摘要。编排 Agent 串行调用 5 个只读工具（依从性/用药清单/相互作用/临期库存/风险事件），把工具输出交给百川 LLM 组装摘要，再过安全守门 `guardSummary`（L1~L4）。未配置 `BAICHUAN_API_KEY` 时降级为规则拼接的确定性摘要。
+
+- **请求体**：`{ "patientId": "p-001" }`
+- **响应**：`{ "patient", "riskLevel", "sections", "tools", "snapshot": { "generatedAt", "dateRange", "toolChain", "mode" }, "citations" }`
+- 详见 `docs/04-患者洞察Agent方案设计.md`
+
 ---
 
 ## 八、Mock 药品库
+
+### OCR 匹配库
 
 Demo 内置两条演示药品数据，OCR 识别后会与之匹配：
 
@@ -208,6 +235,10 @@ Demo 内置两条演示药品数据，OCR 识别后会与之匹配：
 | `mock-cefuroxime-axetil-025` | 头孢呋辛酯片 | 达力新（演示数据） | 0.25 g × 12片 |
 
 匹配逻辑见 `server/index.js` 中的 `matchDrug()`：综合比对通用名、规格剂量与剂型，仅当唯一匹配时才返回结果，否则提示「无法可靠唯一匹配」。
+
+### 患者洞察 Mock 数据
+
+医生端洞察的药品目录（6 种）、相互作用规则、患者画像（8 名）集中存放在 `server/mock-data.json`，与代码分离。患者的服药记录由 `recordPresets`（`rate` 执行率 + `tailSkip` 末尾连续漏服天数）在服务端启动时展开，调整依从性只需改 JSON 一个数字。详见 `docs/04-患者洞察Agent方案设计.md` 第 2.3 节。
 
 ---
 
