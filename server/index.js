@@ -2,38 +2,20 @@ import 'dotenv/config'
 import express from 'express'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { readFileSync } from 'node:fs'
 
 const app = express()
-const port = Number(process.env.PORT || 8787)
 const __dirname = dirname(fileURLToPath(import.meta.url))
+const mockData = JSON.parse(readFileSync(join(__dirname, 'mock-data.json'), 'utf8'))
+const port = Number(process.env.PORT || 8787)
 const staticDir = join(__dirname, '..', 'dist')
 
 app.use(express.json({ limit: '22mb' }))
 
-const mockDrugs = [
-  {
-    id: 'mock-amlodipine-5',
-    genericName: '苯磺酸氨氯地平片',
-    brandName: '络活喜（演示数据）',
-    specification: '5 mg × 7片',
-    form: '片剂',
-    manufacturer: '辉瑞制药有限公司',
-    approval: '国药准字H10950224',
-    stock: 28,
-    expiry: '2027-12-31',
-  },
-  {
-    id: 'mock-cefuroxime-axetil-025',
-    genericName: '头孢呋辛酯片',
-    brandName: '达力新（演示数据）',
-    specification: '0.25 g × 12片',
-    form: '片剂',
-    manufacturer: '国药集团致君（深圳）制药有限公司',
-    approval: '包装正面未显示，待核对',
-    stock: 12,
-    expiry: '待录入',
-  },
-]
+// 药品库前两条用于 OCR 匹配（matchDrug），完整目录用于患者洞察
+const mockDrugs = mockData.drugs.slice(0, 2)
+const mockDrugCatalog = mockData.drugs
+const interactionRules = mockData.interactionRules
 
 const emergencyPattern = /胸痛|呼吸困难|意识异常|昏迷|抽搐|大量误服|儿童误服|严重过敏|喉头紧缩|呕血|黑便|大量出血|自杀|自伤/
 const prohibitedPattern = /停药|换药|增量|减量|加量|改剂量|改成.*片|应该吃几片|能吃几片/
@@ -59,66 +41,13 @@ const drugProfiles = {
 // 患者洞察 Agent · Mock 数据与只读工具
 // 对应 docs/04-患者洞察Agent方案设计.md 阶段 B
 // 所有工具均为只读，工具层不存在任何调剂量/换药/停药/下发医嘱的写工具。
+// 静态数据（药品/相互作用/患者画像）来自 mock-data.json；
+// 服药记录由 recordPresets 的 rate/tailSkip 参数在启动时展开。
 // ---------------------------------------------------------------------------
 
-// Mock 相互作用规则表（演示用，未经医学审核，正式版需对接权威知识库）
-const interactionRules = [
-  { drugs: ['mock-amlodipine-5', 'mock-atorvastatin-20'], level: '中等', note: '氨氯地平与阿托伐他汀联用时，少数患者可能出现肌痛或肝酶升高，需关注。' },
-  { drugs: ['mock-metformin-500', 'mock-glipizide-5'], level: '中等', note: '二甲双胍与格列吡嗪联用可能增加低血糖风险，需关注血糖监测。' },
-]
-
-// Mock 药品扩展档案（演示版新增药品，用于不同患者组合）
-const mockDrugCatalog = [
-  ...mockDrugs,
-  {
-    id: 'mock-atorvastatin-20',
-    genericName: '阿托伐他汀钙片',
-    brandName: '立普妥（演示数据）',
-    specification: '20 mg × 7片',
-    form: '片剂',
-    manufacturer: '辉瑞制药有限公司',
-    approval: '国药准字H20051408',
-    stock: 14,
-    expiry: '2026-08-15',
-  },
-  {
-    id: 'mock-metformin-500',
-    genericName: '盐酸二甲双胍片',
-    brandName: '格华止（演示数据）',
-    specification: '0.5 g × 20片',
-    form: '片剂',
-    manufacturer: '中美上海施贵宝制药有限公司',
-    approval: '国药准字H20023370',
-    stock: 30,
-    expiry: '2027-06-30',
-  },
-  {
-    id: 'mock-glipizide-5',
-    genericName: '格列吡嗪片',
-    brandName: '美吡达（演示数据）',
-    specification: '5 mg × 30片',
-    form: '片剂',
-    manufacturer: '海南赞邦制药有限公司',
-    approval: '国药准字H10930076',
-    stock: 8,
-    expiry: '2026-09-01',
-  },
-  {
-    id: 'mock-omeprazole-20',
-    genericName: '奥美拉唑肠溶胶囊',
-    brandName: '洛赛克（演示数据）',
-    specification: '20 mg × 14粒',
-    form: '胶囊剂',
-    manufacturer: '阿斯利康制药有限公司',
-    approval: '国药准字H10940037',
-    stock: 21,
-    expiry: '2028-01-31',
-  },
-]
-
-// 生成近 N 天的日期数组（YYYY-MM-DD），用于构造服药记录
+// 生成近 N 天的日期数组（YYYY-MM-DD），基准日取自 mock-data.json，保证 Mock 数据稳定
 function recentDates(days) {
-  const today = new Date('2026-07-21') // 固定演示基准日，保证 Mock 数据稳定
+  const today = new Date(mockData.baseDate)
   const list = []
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today)
@@ -141,112 +70,14 @@ function buildRecords(drugId, days, rate, tailSkip = 0) {
   })
 }
 
-// Mock 患者数据集（8 名虚拟患者，覆盖不同依从性 / 相互作用 / 临期 / 风险事件场景）
-const mockPatients = [
-  {
-    id: 'p-001', name: '张某某', age: 68, gender: '男',
-    conditions: ['高血压', '2型糖尿病'],
-    drugIds: ['mock-amlodipine-5', 'mock-metformin-500', 'mock-atorvastatin-20'],
-    records: [
-      ...buildRecords('mock-amlodipine-5', 30, 0.55, 3),
-      ...buildRecords('mock-metformin-500', 30, 0.7, 1),
-      ...buildRecords('mock-atorvastatin-20', 30, 0.8, 0),
-    ],
-    consultHistory: { count: 12, lastQuestion: '能不能把降压药停了', riskLevel: 'L3', blockedCount: 4 },
-    riskEvents: [
-      { date: '2026-07-20', level: 'L4', type: '紧急关键词', detail: '咨询命中"胸痛"，已引导拨打急救电话' },
-      { date: '2026-07-15', level: 'L3', type: '拒答', detail: '询问能否停药，已引导联系开方医生' },
-    ],
-    enrolledAt: '2026-06-01', lastActiveAt: '2026-07-21',
-  },
-  {
-    id: 'p-002', name: '李某某', age: 72, gender: '女',
-    conditions: ['高血压', '高血脂'],
-    drugIds: ['mock-amlodipine-5', 'mock-atorvastatin-20'],
-    records: [
-      ...buildRecords('mock-amlodipine-5', 30, 0.4, 5),
-      ...buildRecords('mock-atorvastatin-20', 30, 0.5, 4),
-    ],
-    consultHistory: { count: 8, lastQuestion: '阿托伐他汀快过期了还能吃吗', riskLevel: 'L1', blockedCount: 0 },
-    riskEvents: [],
-    enrolledAt: '2026-06-10', lastActiveAt: '2026-07-19',
-  },
-  {
-    id: 'p-003', name: '王某某', age: 65, gender: '男',
-    conditions: ['2型糖尿病'],
-    drugIds: ['mock-metformin-500', 'mock-glipizide-5'],
-    records: [
-      ...buildRecords('mock-metformin-500', 30, 0.92, 0),
-      ...buildRecords('mock-glipizide-5', 30, 0.88, 0),
-    ],
-    consultHistory: { count: 5, lastQuestion: '二甲双胍应该饭前还是饭后吃', riskLevel: 'L1', blockedCount: 0 },
-    riskEvents: [],
-    enrolledAt: '2026-06-05', lastActiveAt: '2026-07-21',
-  },
-  {
-    id: 'p-004', name: '赵某某', age: 58, gender: '女',
-    conditions: ['胃溃疡', '高血压'],
-    drugIds: ['mock-omeprazole-20', 'mock-amlodipine-5'],
-    records: [
-      ...buildRecords('mock-omeprazole-20', 30, 0.95, 0),
-      ...buildRecords('mock-amlodipine-5', 30, 0.9, 0),
-    ],
-    consultHistory: { count: 3, lastQuestion: '奥美拉唑能长期吃吗', riskLevel: 'L1', blockedCount: 0 },
-    riskEvents: [],
-    enrolledAt: '2026-06-15', lastActiveAt: '2026-07-20',
-  },
-  {
-    id: 'p-005', name: '孙某某', age: 75, gender: '男',
-    conditions: ['高血压', '2型糖尿病', '高血脂'],
-    drugIds: ['mock-amlodipine-5', 'mock-metformin-500', 'mock-atorvastatin-20', 'mock-glipizide-5'],
-    records: [
-      ...buildRecords('mock-amlodipine-5', 30, 0.6, 2),
-      ...buildRecords('mock-metformin-500', 30, 0.65, 1),
-      ...buildRecords('mock-atorvastatin-20', 30, 0.5, 3),
-      ...buildRecords('mock-glipizide-5', 30, 0.7, 0),
-    ],
-    consultHistory: { count: 15, lastQuestion: '格列吡嗪能不能加量', riskLevel: 'L3', blockedCount: 6 },
-    riskEvents: [
-      { date: '2026-07-18', level: 'L3', type: '拒答', detail: '询问加量，已引导联系医生' },
-    ],
-    enrolledAt: '2026-06-01', lastActiveAt: '2026-07-21',
-  },
-  {
-    id: 'p-006', name: '周某某', age: 60, gender: '女',
-    conditions: ['高血压'],
-    drugIds: ['mock-amlodipine-5'],
-    records: [...buildRecords('mock-amlodipine-5', 30, 0.97, 0)],
-    consultHistory: { count: 2, lastQuestion: '这个药怎么保存', riskLevel: 'L1', blockedCount: 0 },
-    riskEvents: [],
-    enrolledAt: '2026-06-20', lastActiveAt: '2026-07-21',
-  },
-  {
-    id: 'p-007', name: '吴某某', age: 70, gender: '男',
-    conditions: ['2型糖尿病', '高血脂'],
-    drugIds: ['mock-metformin-500', 'mock-atorvastatin-20'],
-    records: [
-      ...buildRecords('mock-metformin-500', 30, 0.3, 7),
-      ...buildRecords('mock-atorvastatin-20', 30, 0.35, 6),
-    ],
-    consultHistory: { count: 10, lastQuestion: '药吃完了能不能不吃', riskLevel: 'L3', blockedCount: 5 },
-    riskEvents: [
-      { date: '2026-07-19', level: 'L3', type: '拒答', detail: '询问停药，已引导联系医生' },
-    ],
-    enrolledAt: '2026-06-08', lastActiveAt: '2026-07-20',
-  },
-  {
-    id: 'p-008', name: '郑某某', age: 63, gender: '女',
-    conditions: ['高血压', '胃溃疡'],
-    drugIds: ['mock-amlodipine-5', 'mock-omeprazole-20'],
-    records: [
-      ...buildRecords('mock-amlodipine-5', 30, 0.85, 1),
-      ...buildRecords('mock-omeprazole-20', 30, 0.9, 0),
-    ],
-    consultHistory: { count: 4, lastQuestion: '奥美拉唑和降压药能一起吃吗', riskLevel: 'L1', blockedCount: 0 },
-    riskEvents: [],
-    enrolledAt: '2026-06-12', lastActiveAt: '2026-07-21',
-  },
-]
+// 患者数据集：从 mock-data.json 读取画像，把 recordPresets 展开为真实 records
+const mockPatients = mockData.patients.map((p) => ({
+  ...p,
+  records: (p.recordPresets || []).flatMap((preset) =>
+    buildRecords(preset.drugId, mockData.recordDays, preset.rate, preset.tailSkip),
+  ),
+  recordPresets: undefined,
+}))
 
 function findPatient(patientId) {
   return mockPatients.find((p) => p.id === patientId) || null
