@@ -1,5 +1,5 @@
 {
-  "_comment": "安心用药 · 患者洞察 Mock 数据。演示用，未经医学审核，不用于真实诊疗。",
+  "_comment": "安心用药 · Mock 数据。演示用，未经医学审核，不用于真实诊疗。V2 数据资产三库分列：drugs（药品身份库/洞察目录）、packageInserts（说明书库）、interactionRules（相互作用规则库）。海露 0.1% 条目按 docs/data-curation/mock-hycosan-01-海露.md 整理。",
   "baseDate": "2026-07-21",
   "recordDays": 30,
 
@@ -13,6 +13,8 @@
       "manufacturer": "辉瑞制药有限公司",
       "approval": "国药准字H10950224",
       "stock": 28,
+      "stockUnit": "片",
+      "packageStock": 7,
       "expiry": "2027-12-31"
     },
     {
@@ -24,7 +26,51 @@
       "manufacturer": "国药集团致君（深圳）制药有限公司",
       "approval": "包装正面未显示，待核对",
       "stock": 12,
+      "stockUnit": "片",
+      "packageStock": 12,
       "expiry": "待录入"
+    },
+    {
+      "id": "mock-hycosan-01",
+      "genericName": "玻璃酸钠滴眼液",
+      "brandName": "海露（HYCOSAN）",
+      "specification": "0.1%（10mL：10mg）",
+      "form": "滴眼液",
+      "manufacturer": "EUSAN GmbH",
+      "approval": "H20150150",
+      "otcClass": "OTC甲",
+      "stock": 200,
+      "stockUnit": "滴",
+      "packageStock": 200,
+      "packageStockNote": "标签标注约 200 滴/支；盒面约 300 滴/支（两源冲突，确认页暴露不裁决）",
+      "expiry": "待药盒读取"
+    },
+    {
+      "id": "mock-hycosan-02",
+      "genericName": "玻璃酸钠滴眼液",
+      "brandName": "海露（多规格演示条目）",
+      "specification": "0.2%（10mL：20mg）",
+      "form": "滴眼液",
+      "manufacturer": "URSAPHARM GmbH",
+      "approval": "演示条目（未核对）",
+      "stock": 200,
+      "stockUnit": "滴",
+      "packageStock": 200,
+      "expiry": "待药盒读取",
+      "note": "多规格陷阱演示条目：与 0.1% 同通用名不同规格，用于验证『药名+规格+剂型』严格匹配与冲突暴露"
+    },
+    {
+      "id": "mock-levofloxacin-eye-01",
+      "genericName": "左氧氟沙星滴眼液",
+      "brandName": "可乐必妥（演示数据）",
+      "specification": "0.5%（5mL：24.4mg）",
+      "form": "滴眼液",
+      "manufacturer": "参天制药（演示数据）",
+      "approval": "演示条目（未核对）",
+      "stock": 100,
+      "stockUnit": "滴",
+      "packageStock": 100,
+      "expiry": "2027-10-31"
     },
     {
       "id": "mock-atorvastatin-20",
@@ -35,6 +81,8 @@
       "manufacturer": "辉瑞制药有限公司",
       "approval": "国药准字H20051408",
       "stock": 14,
+      "stockUnit": "片",
+      "packageStock": 7,
       "expiry": "2026-08-15"
     },
     {
@@ -46,6 +94,8 @@
       "manufacturer": "中美上海施贵宝制药有限公司",
       "approval": "国药准字H20023370",
       "stock": 30,
+      "stockUnit": "片",
+      "packageStock": 20,
       "expiry": "2027-06-30"
     },
     {
@@ -57,6 +107,8 @@
       "manufacturer": "海南赞邦制药有限公司",
       "approval": "国药准字H10930076",
       "stock": 8,
+      "stockUnit": "片",
+      "packageStock": 30,
       "expiry": "2026-09-01"
     },
     {
@@ -68,20 +120,151 @@
       "manufacturer": "阿斯利康制药有限公司",
       "approval": "国药准字H10940037",
       "stock": 21,
+      "stockUnit": "粒",
+      "packageStock": 14,
       "expiry": "2028-01-31"
+    }
+  ],
+
+  "packageInserts": [
+    {
+      "drugId": "mock-hycosan-01",
+      "genericName": "玻璃酸钠滴眼液",
+      "brandName": "海露（HYCOSAN）",
+      "form": "滴眼液",
+      "specification": "0.1%（10mL：10mg）",
+      "indication": "用于干眼症，缓解干眼症状。",
+      "components": "每支 10mL 含玻璃酸钠 10mg；辅料：无水枸橼酸、枸橼酸钠、山梨醇、注射用水。",
+      "dosage": {
+        "adult": {
+          "route": "滴眼",
+          "usual": "一次 1 滴，一日 3 次，可按需增频",
+          "frequencyPerDay": 3,
+          "dosePerUse": { "value": 1, "unit": "滴" },
+          "maxFrequencyPerDay": { "value": 10, "unit": "次", "note": "超出需眼科医生指导" }
+        },
+        "notes": "适于长期治疗；可配戴隐形眼镜时使用"
+      },
+      "contraindications": ["对本品中任一成分有过敏史者禁用"],
+      "adverseReactions": "眼部瘙痒、多泪、烧灼感、刺痛、结膜充血、视物模糊等；不含防腐剂。",
+      "precautions": [
+        "如同时使用其他滴眼液，两药使用需间隔至少 30 分钟",
+        "与眼膏联用时的使用顺序请遵循说明书与医嘱",
+        "滴眼时注意不要触碰瓶口，避免污染"
+      ],
+      "interactions": "如同时使用其他滴眼液，两药使用需间隔至少 30 分钟；与眼膏联用时的使用顺序请遵循说明书与医嘱。",
+      "pharmacology": "玻璃酸钠为眼表天然成分，可在眼表形成规则、稳定、长效的水分膜，缓解干眼症状。",
+      "pharmacokinetics": "局部用药，不吸收入血、不渗透角膜，无全身毒性。",
+      "storage": "密封保存（具体以包装说明为准）",
+      "afterOpeningDays": 180,
+      "source": "丁香园用药助手（说明书修改日期 2022-12-28）",
+      "version": "dxy-2022-12-28",
+      "sourceUrl": "https://drugs.dxy.cn/pc/drug/pFa0Fp6vlHtPoUY5VhIOnig",
+      "curationNote": "按 docs/data-curation/mock-hycosan-01-海露.md 整理（2026-09-04），注册证号与有效期待实物核对"
+    },
+    {
+      "drugId": "mock-levofloxacin-eye-01",
+      "genericName": "左氧氟沙星滴眼液",
+      "brandName": "可乐必妥（演示数据）",
+      "form": "滴眼液",
+      "specification": "0.5%（5mL：24.4mg）",
+      "indication": "用于敏感细菌引起的外眼部感染性疾病（演示数据）。",
+      "components": "每支 5mL 含左氧氟沙星 24.4mg（演示数据）。",
+      "dosage": {
+        "adult": {
+          "route": "滴眼",
+          "usual": "一次 1 滴，一日 3 次（演示数据）",
+          "frequencyPerDay": 3,
+          "dosePerUse": { "value": 1, "unit": "滴" },
+          "maxFrequencyPerDay": { "value": 6, "unit": "次", "note": "超出需医生指导（演示值）" }
+        },
+        "notes": "演示数据，未经数据整理流程"
+      },
+      "contraindications": ["对本品成分或喹诺酮类药物过敏者禁用（演示数据）"],
+      "adverseReactions": "可能出现眼部刺激感、瘙痒等（演示数据）。",
+      "precautions": ["不建议长期使用，疗程遵医嘱（演示数据）"],
+      "interactions": "与其他滴眼液联用需间隔使用（演示数据）。",
+      "pharmacology": "左氧氟沙星为喹诺酮类抗菌药，通过抑制细菌 DNA 旋转酶发挥抗菌作用（演示数据）。",
+      "pharmacokinetics": "局部给药（演示数据）。",
+      "source": "本地演示说明书库（未经整理流程）",
+      "version": "demo-local-1"
+    },
+    {
+      "drugId": "mock-amlodipine-5",
+      "genericName": "苯磺酸氨氯地平片",
+      "brandName": "络活喜（演示数据）",
+      "form": "片剂",
+      "specification": "5 mg × 7片",
+      "indication": "常用于控制血压相关问题，需按医生处方使用。",
+      "components": "每片含苯磺酸氨氯地平 5mg（演示数据）。",
+      "dosage": {
+        "adult": {
+          "route": "口服",
+          "usual": "一日 1 次，每次 1 片",
+          "frequencyPerDay": 1,
+          "dosePerUse": { "value": 1, "unit": "片" },
+          "maxFrequencyPerDay": { "value": 1, "unit": "次", "note": "调整需医生指导（演示值）" }
+        },
+        "notes": "演示数据，未经医学审核"
+      },
+      "contraindications": ["对成分过敏者禁用"],
+      "adverseReactions": "可能出现头晕、面部潮红、踝部水肿等不适。",
+      "precautions": ["定期监测血压", "不要自行停药", "密封、避光保存，放在儿童接触不到的地方"],
+      "interactions": "与部分药物联用需关注，详见说明书。",
+      "pharmacology": "钙通道阻滞剂，通过扩张外周血管降低血压（演示数据）。",
+      "pharmacokinetics": "口服吸收缓慢平稳，每日一次给药（演示数据）。",
+      "storage": "密封、避光保存，放在儿童接触不到的地方。",
+      "source": "本地 Mock 药品档案（演示数据，未经医学审核）",
+      "version": "mock-1"
+    },
+    {
+      "drugId": "mock-cefuroxime-axetil-025",
+      "genericName": "头孢呋辛酯片",
+      "brandName": "达力新（演示数据）",
+      "form": "片剂",
+      "specification": "0.25 g × 12片",
+      "indication": "属于抗生素，通常用于敏感细菌引起的感染，对普通感冒等病毒感染无效。",
+      "components": "每片含头孢呋辛酯 0.25g（演示数据）。",
+      "dosage": {
+        "adult": {
+          "route": "口服",
+          "usual": "按处方规定疗程服用（演示数据）",
+          "frequencyPerDay": 2,
+          "dosePerUse": { "value": 1, "unit": "片" },
+          "maxFrequencyPerDay": { "value": 3, "unit": "次", "note": "演示值，以说明书为准" }
+        },
+        "notes": "按包装要求密封保存，避免受潮，放在儿童接触不到的地方。"
+      },
+      "contraindications": ["对头孢菌素类过敏者禁用"],
+      "adverseReactions": "可能出现恶心、腹泻等胃肠道不适。",
+      "precautions": ["抗菌药需完成处方疗程", "避免与酒精同服"],
+      "interactions": "与部分药物联用需关注，详见说明书。",
+      "pharmacology": "第二代头孢菌素类抗生素，抑制细菌细胞壁合成（演示数据）。",
+      "pharmacokinetics": "口服吸收后在肠黏膜水解为头孢呋辛（演示数据）。",
+      "storage": "按包装要求密封保存，避免受潮。",
+      "source": "本地 Mock 药品档案（演示数据，未经医学审核）",
+      "version": "mock-1"
     }
   ],
 
   "interactionRules": [
     {
       "drugs": ["mock-amlodipine-5", "mock-atorvastatin-20"],
-      "level": "中等",
-      "note": "氨氯地平与阿托伐他汀联用时，少数患者可能出现肌痛或肝酶升高，需关注。"
+      "level": "需监测",
+      "note": "氨氯地平与阿托伐他汀联用时，少数患者可能出现肌痛或肝酶升高，需关注。",
+      "source": "两药说明书相互作用段（演示抄录）"
     },
     {
       "drugs": ["mock-metformin-500", "mock-glipizide-5"],
-      "level": "中等",
-      "note": "二甲双胍与格列吡嗪联用可能增加低血糖风险，需关注血糖监测。"
+      "level": "需监测",
+      "note": "二甲双胍与格列吡嗪联用可能增加低血糖风险，需关注血糖监测。",
+      "source": "两药说明书注意事项段（演示抄录）"
+    },
+    {
+      "drugs": ["mock-hycosan-01", "mock-levofloxacin-eye-01"],
+      "level": "需监测",
+      "note": "两种滴眼液同时使用需间隔至少 30 分钟，先后顺序请咨询医生或药师。",
+      "source": "海露说明书注意事项②（演示抄录，docs/data-curation/mock-hycosan-01-海露.md）"
     }
   ],
 
@@ -202,7 +385,7 @@
       ],
       "consultHistory": { "count": 10, "lastQuestion": "药吃完了能不能不吃", "riskLevel": "L3", "blockedCount": 5 },
       "riskEvents": [
-        { "date": "2026-07-19", "level": "L3", "type": "拒答", "detail": "询问停药，已引导联系医生" }
+        { "date": "2026-07-19", "level": "L3", "type": "拒答", "detail": "询问停药，已引导联系开方医生" }
       ],
       "enrolledAt": "2026-06-08",
       "lastActiveAt": "2026-07-20"
