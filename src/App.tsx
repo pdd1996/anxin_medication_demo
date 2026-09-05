@@ -482,7 +482,7 @@ function PatientApp() {
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark"><Pill size={24} /></span>
-          <div><strong>安心用药</strong><small>CARE MED</small></div>
+          <div><strong>安心用药</strong><small>AnxinMed</small></div>
         </div>
         <nav>
           {navItems.map((item) => {
